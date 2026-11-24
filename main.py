@@ -32,12 +32,19 @@ def main():
     if problem is not None:
         print("entry rejected: " + problem, file=sys.stderr)
         return 1
-    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
+    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output") or "/output"
     os.makedirs(out_dir, exist_ok=True)
     target = os.path.join(out_dir, "entry.txt")
     with open(target, "w", encoding="utf-8") as handle:
         handle.write(ERROR_LINE)
     os.chmod(target, 0o644)
+    # Read the file back: the entry that gets judged must be byte for byte
+    # the line this program means to send, not just what it tried to write.
+    with open(target, "r", encoding="utf-8") as handle:
+        written = handle.read()
+    if written != ERROR_LINE:
+        print("entry mismatch after write", file=sys.stderr)
+        return 1
     print("wrote %d chars to %s" % (len(ERROR_LINE), target))
     return 0
 
